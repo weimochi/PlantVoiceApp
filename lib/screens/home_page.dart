@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/foundation.dart'; // 給 Uint8List 用的
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
@@ -13,7 +13,7 @@ import 'package:geocoding/geocoding.dart' show placemarkFromCoordinates;
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
-import 'package:file_picker/file_picker.dart'; // ★ 新增：用來選取音檔
+import 'package:file_picker/file_picker.dart'; // 處理 macOS 另存新檔與選取音檔
 
 import 'settings_page.dart';
 
@@ -27,15 +27,13 @@ class _HomePageState extends State<HomePage> {
   final _recorder = AudioRecorder();
   bool _isRecording = false;
   bool _isAnalyzing = false;
-  bool _isTranscribing = false; // ★ 新增：控制轉文字的 Loading 狀態
+  bool _isTranscribing = false;
 
   String? _lastFilePath;
   String? _audioFileName;
-  Uint8List? _audioBytes; // ★ 新增：統一將音檔存成二進位資料（支援網頁版）
+  Uint8List? _audioBytes;
 
-  // ★ 新增：第一區塊的逐字稿輸入框
   final _transcriptionController = TextEditingController();
-  // 第二區塊的結構化文字輸入框
   final _inputController = TextEditingController();
 
   Map<String, dynamic>? _parsed;
@@ -72,7 +70,7 @@ class _HomePageState extends State<HomePage> {
   // ====== ① 上傳音檔 ======
   Future<void> _pickAudioFile() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
-      type: FileType.audio, // 限制只能選音檔 (mp3, wav, m4a...)
+      type: FileType.audio,
     );
 
     if (result != null) {
@@ -80,7 +78,6 @@ class _HomePageState extends State<HomePage> {
         _audioFileName = result.files.single.name;
         _lastFilePath = result.files.single.path;
 
-        // 網頁版會直接拿到 bytes，手機版則需透過 path 讀取
         if (result.files.single.bytes != null) {
           _audioBytes = result.files.single.bytes;
         } else if (_lastFilePath != null) {
@@ -105,7 +102,6 @@ class _HomePageState extends State<HomePage> {
           _audioFileName = path.split('/').last;
         });
 
-        // 嘗試讀取為 bytes（支援後續轉譯）
         try {
           if (!kIsWeb) _audioBytes = await File(path).readAsBytes();
         } catch (_) {}
@@ -120,9 +116,10 @@ class _HomePageState extends State<HomePage> {
 
     final mic = await Permission.microphone.request();
     if (!mic.isGranted) {
-      if (context.mounted)
+      if (context.mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(const SnackBar(content: Text('需要麥克風權限')));
+      }
       return;
     }
     final dir = Directory.systemTemp.path;
@@ -136,7 +133,7 @@ class _HomePageState extends State<HomePage> {
     setState(() => _isRecording = true);
   }
 
-  // ====== ★ 新增：將音檔轉換為文字 (逐字稿) ======
+  // ====== 轉文字 ======
   Future<void> _transcribeAudio() async {
     if (_audioBytes == null) {
       ScaffoldMessenger.of(context)
@@ -160,18 +157,16 @@ class _HomePageState extends State<HomePage> {
       String transcribedText = '';
 
       if (aiModel == 'Gemini') {
-        // Gemini 支援直接把音檔當作多媒體輸入
         final model =
             GenerativeModel(model: 'gemini-2.5-flash', apiKey: apiKey);
         final response = await model.generateContent([
           Content.multi([
             TextPart('請將這段錄音轉換為逐字稿，請只輸出聽到的文字內容，不需要任何額外的解釋或問候。'),
-            DataPart('audio/mp3', _audioBytes!), // 這裡標註 mime-type，大部分音檔都適用
+            DataPart('audio/mp3', _audioBytes!),
           ])
         ]);
         transcribedText = response.text ?? '';
       } else if (aiModel == 'OpenAI') {
-        // OpenAI 使用 Whisper API 進行轉譯
         var request = http.MultipartRequest('POST',
             Uri.parse('https://api.openai.com/v1/audio/transcriptions'));
         request.headers['Authorization'] = 'Bearer $apiKey';
@@ -189,13 +184,13 @@ class _HomePageState extends State<HomePage> {
 
       setState(() {
         _transcriptionController.text = transcribedText;
-        // ★ 自動將結果填入第二區塊的輸入框！
         _inputController.text = transcribedText;
       });
     } catch (e) {
-      if (context.mounted)
+      if (context.mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text('轉譯失敗: $e')));
+      }
     } finally {
       setState(() => _isTranscribing = false);
     }
@@ -211,9 +206,10 @@ class _HomePageState extends State<HomePage> {
     final apiKey = prefs.getString('${aiModel.toLowerCase()}_api_key') ?? '';
 
     if (apiKey.isEmpty) {
-      if (context.mounted)
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('請先點擊右上角 ⚙️ 設定 API Key')));
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('請先點擊右上角 ⚙️ 設定 API Key')));
+      }
       return;
     }
 
@@ -280,9 +276,10 @@ class _HomePageState extends State<HomePage> {
         setState(() => _parsed = jsonResult);
       }
     } catch (e) {
-      if (context.mounted)
+      if (context.mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text('$aiModel 萃取失敗: $e')));
+      }
     } finally {
       setState(() => _isAnalyzing = false);
     }
@@ -303,8 +300,9 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _getLocation() async {
     LocationPermission perm = await Geolocator.checkPermission();
-    if (perm == LocationPermission.denied)
+    if (perm == LocationPermission.denied) {
       perm = await Geolocator.requestPermission();
+    }
     if (perm == LocationPermission.denied ||
         perm == LocationPermission.deniedForever) return;
     final pos = await Geolocator.getCurrentPosition(
@@ -321,7 +319,7 @@ class _HomePageState extends State<HomePage> {
     } catch (_) {}
   }
 
-  // ====== 清單與匯出保持不變 ======
+  // ====== 清單 ======
   void _addCurrentRecord() {
     if (_parsed == null) return;
     final withMeta = {
@@ -340,6 +338,7 @@ class _HomePageState extends State<HomePage> {
         .showSnackBar(const SnackBar(content: Text('已加入清單')));
   }
 
+  // ====== 匯出 CSV ======
   Future<void> _exportCsv() async {
     if (_records.isEmpty && _parsed == null) return;
     final list = _records.isNotEmpty
@@ -347,6 +346,7 @@ class _HomePageState extends State<HomePage> {
         : [
             {'系統時間': DateTime.now().toIso8601String(), ...?_parsed}
           ];
+
     final headers = <String>{
       '系統時間',
       '樣區編號',
@@ -379,6 +379,7 @@ class _HomePageState extends State<HomePage> {
       '伴生植物_覆蓋度 (%)',
       '原文'
     }.toList();
+
     final buffer = StringBuffer();
     buffer.write('\uFEFF');
     buffer.writeln(headers.join(','));
@@ -387,12 +388,32 @@ class _HomePageState extends State<HomePage> {
           .map((h) => '"${row[h]?.toString().replaceAll('"', '""') ?? ''}"')
           .join(','));
     }
-    final file = File(
-        '${(await getApplicationDocumentsDirectory()).path}/survey_${DateTime.now().millisecondsSinceEpoch}.csv');
-    await file.writeAsString(buffer.toString());
-    await Share.shareXFiles([XFile(file.path)], text: 'Export CSV');
+
+    try {
+      String? outputFile = await FilePicker.platform.saveFile(
+        dialogTitle: '將資料另存為 CSV',
+        fileName: 'survey_${DateTime.now().millisecondsSinceEpoch}.csv',
+        type: FileType.custom,
+        allowedExtensions: ['csv'],
+      );
+
+      if (outputFile != null) {
+        await File(outputFile).writeAsString(buffer.toString());
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text('✅ 成功儲存至：$outputFile'),
+              backgroundColor: Colors.green));
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('❌ 儲存失敗：$e'), backgroundColor: Colors.red));
+      }
+    }
   }
 
+  // ====== 匯出 TSV ======
   Future<void> _exportTsv() async {
     if (_records.isEmpty && _parsed == null) return;
     final list = _records.isNotEmpty
@@ -400,6 +421,7 @@ class _HomePageState extends State<HomePage> {
         : [
             {'系統時間': DateTime.now().toIso8601String(), ...?_parsed}
           ];
+
     final headers = <String>{
       '系統時間',
       '樣區編號',
@@ -432,6 +454,7 @@ class _HomePageState extends State<HomePage> {
       '伴生植物_覆蓋度 (%)',
       '原文'
     }.toList();
+
     final buffer = StringBuffer();
     buffer.write('\uFEFF');
     buffer.writeln(headers.join('\t'));
@@ -442,10 +465,29 @@ class _HomePageState extends State<HomePage> {
               .replaceAll('\n', ' '))
           .join('\t'));
     }
-    final file = File(
-        '${(await getApplicationDocumentsDirectory()).path}/survey_${DateTime.now().millisecondsSinceEpoch}.tsv');
-    await file.writeAsString(buffer.toString());
-    await Share.shareXFiles([XFile(file.path)], text: 'Export TSV');
+
+    try {
+      String? outputFile = await FilePicker.platform.saveFile(
+        dialogTitle: '將資料另存為 TSV',
+        fileName: 'survey_${DateTime.now().millisecondsSinceEpoch}.tsv',
+        type: FileType.custom,
+        allowedExtensions: ['tsv'],
+      );
+
+      if (outputFile != null) {
+        await File(outputFile).writeAsString(buffer.toString());
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text('✅ 成功儲存至：$outputFile'),
+              backgroundColor: Colors.green));
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('❌ 儲存失敗：$e'), backgroundColor: Colors.red));
+      }
+    }
   }
 
   @override
@@ -488,7 +530,6 @@ class _HomePageState extends State<HomePage> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // ① 錄音 + 媒體/定位工具
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -512,7 +553,6 @@ class _HomePageState extends State<HomePage> {
                             foregroundColor: _isRecording ? Colors.white : null,
                           ),
                         ),
-                        // ★ 新增：上傳音檔按鈕
                         ElevatedButton.icon(
                           onPressed: _pickAudioFile,
                           icon: const Icon(Icons.upload_file),
@@ -533,8 +573,6 @@ class _HomePageState extends State<HomePage> {
                         style: TextStyle(
                             fontSize: 14, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
-
-                    // ★ 新增：一鍵將音檔轉為逐字稿的按鈕
                     FilledButton.icon(
                       onPressed: (_audioBytes == null || _isTranscribing)
                           ? null
@@ -551,8 +589,6 @@ class _HomePageState extends State<HomePage> {
                           FilledButton.styleFrom(backgroundColor: Colors.teal),
                     ),
                     const SizedBox(height: 12),
-
-                    // ★ 新增：逐字稿文字框（可以在這裡確認與修改）
                     TextField(
                       controller: _transcriptionController,
                       maxLines: 4,
@@ -561,11 +597,9 @@ class _HomePageState extends State<HomePage> {
                         hintText: '音檔的逐字稿會顯示在這裡，您也可以手動修改...',
                       ),
                       onChanged: (value) {
-                        // 如果手動修改逐字稿，自動連動到第二區塊
                         _inputController.text = value;
                       },
                     ),
-
                     const SizedBox(height: 16),
                     const Divider(),
                     const SizedBox(height: 8),
@@ -590,8 +624,6 @@ class _HomePageState extends State<HomePage> {
                   ]),
             ),
           ),
-
-          // ② 文字輸入 + Gemini 解析
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -628,8 +660,6 @@ class _HomePageState extends State<HomePage> {
                   ]),
             ),
           ),
-
-          // ③ 解析結果
           if (_parsed != null)
             Card(
               child: Padding(
@@ -669,8 +699,6 @@ class _HomePageState extends State<HomePage> {
                     ]),
               ),
             ),
-
-          // ④ 清單總覽
           if (_records.isNotEmpty)
             Card(
               child: Padding(
