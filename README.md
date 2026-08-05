@@ -32,3 +32,7 @@ The system automatically parses and organizes these parameters into their respec
 1. Clone the repository:
    ```bash
    git clone [https://github.com/weimochi/PlantVoiceApp.git](https://github.com/weimochi/PlantVoiceApp.git)
+
+## Acknowledgments
+
+Special thanks to **Prof. Liu Shih-Hui** for inspiring the concept and workflow behind this field data collection tool.
