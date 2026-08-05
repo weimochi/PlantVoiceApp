@@ -1,34 +1,34 @@
-# 🌿 PlantVoiceApp (生態樣區語音辨識系統)
+# PlantVoiceApp (Ecological Survey Speech Recognition System)
 
-A smart, AI-powered field data collection tool designed to streamline ecological surveys and plant biology research. 
+A field data collection tool designed to streamline ecological surveys and plant biology research.
 
-透過語音辨識與 AI 結構化萃取技術，調查員在野外只需自然口述，系統即可自動將錄音轉換為精準的生態樣區數據表，大幅降低手寫紀錄的負擔與後續登打時間。
+By combining speech recognition with AI-driven structured data extraction, field researchers can dictate observation notes naturally. The system automatically converts voice recordings into structured ecological survey tables, reducing manual paperwork and post-fieldwork data entry time.
 
-## ✨ 核心功能 (Key Features)
+## Key Features
 
-*   🎙️ **語音輸入與轉譯 (Speech-to-Text):** 支援現場錄音或上傳音檔 (MP3/WAV)，一鍵轉換為逐字稿，並提供即時校閱與手動修改。
-*   🧠 **AI 智慧萃取 (AI Data Extraction):** 自動將口述內容萃取出「樣區編號」、「植物物候」、「伴生植物」、「土壤數值」等結構化生態欄位。
-*   📍 **現場環境紀錄 (Environmental Context):** 支援拍攝現場照片與一鍵獲取高精度 GPS 座標。
-*   🔐 **本地隱私安全 (Local Privacy):** API 金鑰僅儲存於設備本機 (SharedPreferences)，並提供「一鍵徹底銷毀」功能，絕不上傳雲端。
-*   📊 **無縫資料匯出 (Seamless Export):** 支援將調查清單匯出為 CSV 與 TSV 格式，方便後續直接貼入 Notion 資料庫或 Excel 進行分析。
+* Speech-to-Text: Supports live field recording or audio file uploads (MP3/WAV), converting them into transcripts with real-time editing and manual review capabilities.
+* AI Data Extraction: Automatically extracts and parses spoken content into structured fields, including plot ID, plant phenology, associated species, and soil metrics.
+* Environmental Context Logging: Integrates photo capture and high-precision GPS coordinate retrieval.
+* Local Privacy & Security: API keys are stored exclusively on the local device (SharedPreferences) with a one-click wipe feature, ensuring sensitive credentials are never uploaded to the cloud.
+* Data Export: Enables exporting survey records to CSV and TSV formats for integration into Notion databases, Excel, or downstream analytical workflows.
 
-## 🤖 支援的 AI 引擎
+## Supported AI Engines
 
-本系統支援彈性切換主流 AI 服務進行資料萃取：
-*   **Google Gemini** (支援直接音檔辨識與文字萃取)
-*   **OpenAI** (Whisper-1 語音辨識 + GPT-4o 系列萃取)
-*   **Anthropic Claude** (Claude 3 系列文字萃取)
+The system supports configurable AI backends for speech recognition and data extraction:
+* Google Gemini (Direct audio recognition and text extraction)
+* OpenAI (Whisper-1 speech recognition + GPT-4o series text extraction)
+* Anthropic Claude (Claude 3 series text extraction)
 
-## 📖 實際使用情境 (Use Case)
+## Use Case Example
 
-非常適合用於需要記錄多維度數據的田野調查。
-例如，在進行 *Brassica rapa* 或 *Brassica oleracea* 等特定植物的野外棲地調查時，調查員只需口述：
-> 「植物編號 BR-01 是 *Brassica rapa*，葉高 35 公分，目前的物候狀態是展葉和花苞，旁邊主要的伴生植物是大花咸豐草，屬於草本層 H...」
+Designed for multi-parameter field surveys. For example, during an epiphytic plant survey, the investigator can dictate:
 
-系統即可自動將龐雜的特徵分門別類填入對應的資料欄位中。
+> 「這裡是樣區編號 PA-01，調查人員是威威。今天日期是2026年8月4日，時間早上10點。目前海拔高度大約 850 公尺，步道距離是 <5m。現場空氣溫度 26.5 度，空氣相對溼度高達 85%。環境部分，岩石地比例佔 10%，地表裸露度 5%，凋落物覆蓋度 60%，倒木覆蓋度 25%。坡向朝東北，坡度大約 15 度。地表土壤深度測量約 15 公分，土壤含水量 70%，土壤 pH 值 5.8。已經拍攝半球攝影。備註：植株附生於大葉楠主幹上，生長狀況良好。樣區內總株數有 3 株。現在紀錄的這株植物編號是 PA-01-A，目標是 Phalaenopsis amabilis var. formosana，葉高 18 公分，花高 25 公分，目前的物候狀態同時有展葉和花苞。旁邊主要的伴生植物是台灣山蘇花，屬於草本層 H，高度約 0.8 公尺，覆蓋度大概 30%。」
 
-## 🚀 如何開始 (Getting Started)
+The system automatically parses and organizes these parameters into their respective database fields.
 
-1. Clone 本專案至本機：
+## Getting Started
+
+1. Clone the repository:
    ```bash
    git clone [https://github.com/weimochi/PlantVoiceApp.git](https://github.com/weimochi/PlantVoiceApp.git)
