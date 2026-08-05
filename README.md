@@ -35,4 +35,4 @@ The system automatically parses and organizes these parameters into their respec
 
 ## Acknowledgments
 
-Special thanks to Prof. Liu Shih-Hui for inspiring the concept and workflow behind this field data collection tool.
+Special thanks to Prof. Shih-Hui Liu for inspiring the concept and workflow behind this field data collection tool.
